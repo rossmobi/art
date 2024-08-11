@@ -1,5 +1,6 @@
 // raylib-zig (c) Nikolas Wipper 2023
 
+const std = @import("std");
 const rl = @import("raylib");
 
 const Boid = struct {
@@ -9,25 +10,21 @@ const Boid = struct {
     l: f32,
     b: f32,
     h: f32,
-    show_sphere: bool,
-    fn draw(self: *Boid) void {
-        rl.drawCylinder(rl.Vector3.init(1.0, 0.0, -4.0), 0.0, 1.5, 3.0, 8, rl.Color.gold);
-        rl.drawCylinder(
-            rl.Vector3.init(self.x, self.y, self.z),
-            self.l,
-            self.b,
-            self.h,
-            8,
-            rl.Color.gold,
-        );
-        if (self.show_sphere == true) {
-            rl.drawSphere(
-                rl.Vector3.init(self.x, self.y, self.z),
-                self.h * 2,
-                rl.Color.gold.fade(0.2),
-            );
-        }
+    color: rl.Color,
+    fn get_position_vector3(self: *Boid) rl.Vector3 {
+        return rl.Vector3.init(self.x, self.y, self.z);
     }
+    // fn draw(self: *Boid) void {
+    //     rl.drawCylinder(rl.Vector3.init(1.0, 0.0, -4.0), 0.0, 1.5, 3.0, 8, rl.Color.gold);
+    //     rl.drawCylinder(
+    //         rl.Vector3.init(self.x, self.y, self.z),
+    //         self.l,
+    //         self.b,
+    //         self.h,
+    //         8,
+    //         rl.Color.gold,
+    //     );
+    // }
 };
 
 pub fn main() anyerror!void {
@@ -51,7 +48,7 @@ pub fn main() anyerror!void {
         .projection = rl.CameraProjection.camera_perspective,
     };
 
-    rl.hideCursor();
+    // rl.hideCursor();
 
     var myBoid = Boid{
         .x = 2,
@@ -60,7 +57,7 @@ pub fn main() anyerror!void {
         .l = 0.0,
         .b = 1.5,
         .h = 3.0,
-        .show_sphere = true,
+        .color = rl.Color.pink,
     };
 
     // Main game loop
@@ -68,10 +65,8 @@ pub fn main() anyerror!void {
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
-        // if (rl.isKeyDown(rl.KeyboardKey.key_right)) {
-        //     camera.position
-        // }
         camera.update(rl.CameraMode.camera_first_person);
+        myBoid.x -= 0.01;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -91,10 +86,34 @@ pub fn main() anyerror!void {
 
             rl.drawGrid(50, 1);
 
-            rl.drawCubeWires(rl.Vector3.init(-4, 0, 2), 2, 5, 2, rl.Color.gold);
-            rl.drawCube(rl.Vector3.init(-4 - 4, 0 - 4, 2 - 4), 2, 5, 2, rl.Color.red);
+            // rl.drawCubeWires(rl.Vector3.init(-4, 0, 2), 2, 5, 2, rl.Color.gold);
+            rl.drawCube(rl.Vector3.init(-4, 0, 2), 2, 5, 2, rl.Color.red);
 
-            myBoid.draw();
+            rl.drawRay(.{ .position = myBoid.get_position_vector3(), .direction = rl.Vector3.init(myBoid.x + 0.2, myBoid.y + 0.2, myBoid.z + 0.2) }, myBoid.color);
+            const num_points = 300;
+            const turn_fraction = 0.618033;
+
+            for (0..num_points) |i| {
+                // Have to cast the usize 'i' to the f32 expected by Raylib
+                const f = @as(f32, @floatFromInt(i));
+                const t: f32 = f / (num_points - 1);
+                const inclination = std.math.acos(1 - 2 * t);
+                const azimuth = 2 * std.math.pi * turn_fraction * f;
+
+                const x = std.math.sin(inclination) * std.math.cos(azimuth);
+                const y = std.math.sin(inclination) * std.math.sin(azimuth);
+                const z = std.math.cos(inclination);
+
+                const direction = rl.Vector3.init(x * 0.0002, y * 0.0002, z * 0.0002);
+
+                rl.drawRay(
+                    .{ .position = myBoid.get_position_vector3(), .direction = direction },
+                    myBoid.color,
+                );
+            }
+            rl.drawCylinder(myBoid.get_position_vector3(), 0, 0.3, 1, 9, myBoid.color);
+            // rl.drawLine(.{ .position = myBoid.get_position_vector3(), .direction = rl.Vector3.init(myBoid.x + 100, myBoid.y + 100, myBoid.z + 100) }, myBoid.color);
+            // myBoid.draw();
         }
 
         rl.drawText("Congrats! You created your first window!", 190, 200, 20, rl.Color.light_gray);

@@ -1,5 +1,5 @@
 .{
-    .name = "Project",
+    .name = "art",
     .version = "0.0.1",
     .dependencies = .{
         .@"raylib-zig" = .{
