@@ -10,6 +10,7 @@ const Boid = struct {
     l: f32,
     b: f32,
     h: f32,
+    num_points: u32,
     color: rl.Color,
     fn get_position_vector3(self: *Boid) rl.Vector3 {
         return rl.Vector3.init(self.x, self.y, self.z);
@@ -34,6 +35,7 @@ pub fn main() anyerror!void {
     const screenHeight = 800;
 
     rl.initWindow(screenWidth, screenHeight, "raylib-zig [core] example - basic window");
+    // rl.toggleFullscreen();
     defer rl.closeWindow(); // Close window and OpenGL context
 
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
@@ -48,16 +50,28 @@ pub fn main() anyerror!void {
         .projection = rl.CameraProjection.camera_perspective,
     };
 
-    // rl.hideCursor();
+    rl.hideCursor();
 
     var myBoid = Boid{
         .x = 2,
-        .y = 2,
+        .y = 1,
         .z = 2,
         .l = 0.0,
         .b = 1.5,
         .h = 3.0,
-        .color = rl.Color.pink,
+        .num_points = 30,
+        .color = rl.Color.blue,
+    };
+
+    var yourBoid = Boid{
+        .x = 1,
+        .y = 1,
+        .z = 1,
+        .l = 0.0,
+        .b = 1.5,
+        .h = 3.0,
+        .num_points = 30,
+        .color = rl.Color.green,
     };
 
     // Main game loop
@@ -66,7 +80,8 @@ pub fn main() anyerror!void {
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         camera.update(rl.CameraMode.camera_first_person);
-        myBoid.x -= 0.01;
+        myBoid.x -= 0.005;
+        yourBoid.x += 0.005;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -90,27 +105,14 @@ pub fn main() anyerror!void {
             rl.drawCube(rl.Vector3.init(-4, 0, 2), 2, 5, 2, rl.Color.red);
 
             rl.drawRay(.{ .position = myBoid.get_position_vector3(), .direction = rl.Vector3.init(myBoid.x + 0.2, myBoid.y + 0.2, myBoid.z + 0.2) }, myBoid.color);
-            const num_points = 300;
-            const turn_fraction = 0.618033;
 
-            for (0..num_points) |i| {
-                // Have to cast the usize 'i' to the f32 expected by Raylib
-                const f = @as(f32, @floatFromInt(i));
-                const t: f32 = f / (num_points - 1);
-                const inclination = std.math.acos(1 - 2 * t);
-                const azimuth = 2 * std.math.pi * turn_fraction * f;
+            // DRAW RAYS
+            draw_boid(&myBoid, &yourBoid);
+            draw_boid(&yourBoid, &myBoid);
 
-                const x = std.math.sin(inclination) * std.math.cos(azimuth);
-                const y = std.math.sin(inclination) * std.math.sin(azimuth);
-                const z = std.math.cos(inclination);
+            // rl.drawSphere(myBoid.get_position_vector3(), 2, rl.Color.gold);
+            // rl.drawSphere(yourBoid.get_position_vector3(), 2, rl.Color.gold);
 
-                const direction = rl.Vector3.init(x * 0.0002, y * 0.0002, z * 0.0002);
-
-                rl.drawRay(
-                    .{ .position = myBoid.get_position_vector3(), .direction = direction },
-                    myBoid.color,
-                );
-            }
             rl.drawCylinder(myBoid.get_position_vector3(), 0, 0.3, 1, 9, myBoid.color);
             // rl.drawLine(.{ .position = myBoid.get_position_vector3(), .direction = rl.Vector3.init(myBoid.x + 100, myBoid.y + 100, myBoid.z + 100) }, myBoid.color);
             // myBoid.draw();
@@ -118,5 +120,36 @@ pub fn main() anyerror!void {
 
         rl.drawText("Congrats! You created your first window!", 190, 200, 20, rl.Color.light_gray);
         //----------------------------------------------------------------------------------
+    }
+}
+
+fn draw_boid(boid: *Boid, otherBoid: *Boid) void {
+    const stdout = std.io.getStdOut();
+
+    const turn_fraction = 0.618033;
+
+    for (0..boid.num_points) |i| {
+        // Have to cast the usize 'i' to the f32 expected by Raylib
+        const f = @as(f32, @floatFromInt(i));
+        const t: f32 = f / (@as(f32, @floatFromInt(boid.num_points)) - 1);
+        const inclination = std.math.acos(1 - 2 * t);
+        const azimuth = 2 * std.math.pi * turn_fraction * f;
+
+        const x = std.math.sin(inclination) * std.math.cos(azimuth);
+        const y = std.math.sin(inclination) * std.math.sin(azimuth);
+        const z = std.math.cos(inclination);
+
+        const direction = rl.Vector3.init(x * 0.0002, y * 0.0002, z * 0.0002);
+
+        const ray = rl.Ray{ .position = boid.get_position_vector3(), .direction = direction };
+
+        const collision = rl.getRayCollisionSphere(ray, otherBoid.get_position_vector3(), 4);
+
+        rl.drawRay(
+            ray,
+            if (collision.hit) boid.color else rl.Color.yellow,
+        );
+
+        stdout.writer().print("x: {}, y: {}, z: {}, dist: {}, hit: {}\n", .{ x, y, z, 2, collision.hit }) catch {};
     }
 }
