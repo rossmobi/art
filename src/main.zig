@@ -2,33 +2,7 @@
 
 const std = @import("std");
 const rl = @import("raylib");
-
-const Boid = struct {
-    x: f32,
-    y: f32,
-    z: f32,
-    l: f32,
-    b: f32,
-    h: f32,
-    num_points: u32,
-    color: rl.Color,
-    collision_color_normal: rl.Color,
-    collision_color_point: rl.Color,
-    fn get_position_vector3(self: *Boid) rl.Vector3 {
-        return rl.Vector3.init(self.x, self.y, self.z);
-    }
-    // fn draw(self: *Boid) void {
-    //     rl.drawCylinder(rl.Vector3.init(1.0, 0.0, -4.0), 0.0, 1.5, 3.0, 8, rl.Color.gold);
-    //     rl.drawCylinder(
-    //         rl.Vector3.init(self.x, self.y, self.z),
-    //         self.l,
-    //         self.b,
-    //         self.h,
-    //         8,
-    //         rl.Color.gold,
-    //     );
-    // }
-};
+const types = @import("boid.zig");
 
 pub fn main() anyerror!void {
     // Initialization
@@ -47,16 +21,16 @@ pub fn main() anyerror!void {
 
     // ross - create Camera
     var camera = rl.Camera{
-        .position = rl.Vector3.init(0, 1, 10),
+        .fovy = 45,
+        .position = rl.Vector3.init(10, 10, 10),
+        .projection = rl.CameraProjection.camera_perspective,
         .target = rl.Vector3.init(0, 0, 0),
         .up = rl.Vector3.init(0, 1, 0),
-        .fovy = 45,
-        .projection = rl.CameraProjection.camera_perspective,
     };
 
     rl.hideCursor();
 
-    var myBoid = Boid{
+    var myBoid = types.Boid{
         .x = 80,
         .y = 1,
         .z = 2,
@@ -69,7 +43,7 @@ pub fn main() anyerror!void {
         .collision_color_point = rl.Color.green,
     };
 
-    var yourBoid = Boid{
+    var yourBoid = types.Boid{
         .x = 1,
         .y = 1,
         .z = 1,
@@ -81,6 +55,7 @@ pub fn main() anyerror!void {
         .collision_color_normal = rl.Color.pink,
         .collision_color_point = rl.Color.purple,
     };
+
     var position = rl.Vector3.init(0, 0, 0);
     var positionOne = rl.Vector3.init(1, 1, 1);
 
@@ -120,7 +95,8 @@ pub fn main() anyerror!void {
             rl.beginMode3D(camera);
             defer rl.endMode3D();
 
-            rl.drawGrid(50, 1);
+            // rl.drawGrid(50, 1);
+            rl.drawCubeWiresV(rl.Vector3.init(25, 0, 0), rl.Vector3.init(50, 50, 50), rl.Color.gray);
 
             // DRAW RAYS
             draw_boid(&myBoid, &yourBoid);
@@ -153,7 +129,7 @@ pub fn main() anyerror!void {
     }
 }
 
-fn draw_boid(boid: *Boid, otherBoid: *Boid) void {
+fn draw_boid(boid: *types.Boid, otherBoid: *types.Boid) void {
     // const stdout = std.io.getStdOut();
 
     const turn_fraction = 0.618033;

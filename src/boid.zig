@@ -1,27 +1,17 @@
-// const Boid = struct {
-//     x: f32,
-//     y: f32,
-//     z: f32,
-//     l: f32,
-//     b: f32,
-//     h: f32,
-//     show_sphere: bool,
-//     fn draw(self: *Boid) void {
-//         rl.drawCylinder(rl.Vector3.init(1.0, 0.0, -4.0), 0.0, 1.5, 3.0, 8, rl.Color.gold);
-//         rl.drawCylinder(
-//             rl.Vector3.init(self.x, self.y, self.z),
-//             self.l,
-//             self.b,
-//             self.h,
-//             8,
-//             rl.Color.gold,
-//         );
-//         if (self.show_sphere == true) {
-//             rl.drawSphere(
-//                 rl.Vector3.init(self.x, self.y, self.z),
-//                 self.h * 2,
-//                 rl.Color.gold.fade(0.2),
-//             );
-//         }
-//     }
-// };
+const rl = @import("raylib");
+
+pub const Boid = struct {
+    x: f32,
+    y: f32,
+    z: f32,
+    l: f32,
+    b: f32,
+    h: f32,
+    num_points: u32,
+    color: rl.Color,
+    collision_color_normal: rl.Color,
+    collision_color_point: rl.Color,
+    pub fn get_position_vector3(self: *Boid) rl.Vector3 {
+        return rl.Vector3.init(self.x, self.y, self.z);
+    }
+};
